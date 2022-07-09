@@ -3,6 +3,7 @@ const Post = require("./models/Post") // new
 const Users = require("./models/Users") // new
 const router = express.Router()
 const { hashPassword, decrypt } = require('./util/util');
+const AuthController = require('./controllers/AuthController');
 
 // Get all posts
 router.get("/posts", async (req, res) => {
@@ -18,15 +19,7 @@ router.post("/posts", async (req, res) => {
 	await post.save()
 	res.send(JSON.stringify(req.body))
 });
-
-router.post("/signup", async (req, res) => {
-	//const encrypt = './util/util';
-	console.log(req.body);
-	console.log(encrypt(req.body.password));
-	const Users = new Post(req.body)
-	await Users.save()
-	res.send(JSON.stringify(req.body))
-});
+router.post("/signup", (req, res)=>{return AuthController.UserRegistration(req, res)});
 
 
 module.exports = router
