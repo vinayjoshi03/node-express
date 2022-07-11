@@ -6,12 +6,13 @@ var morgan = require('morgan');
 const winston = require('winston');
 var { logger } = require('./loggerConfig');
 
-
+require('dotenv').config();
 // Connect to MongoDB database
 const uri = "mongodb+srv://root:RzMKcssQ6z7ghisW@cluster0.zon0z.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
 mongoose
 	.connect(uri, { useNewUrlParser: true })
 	.then(() => {
+		require('dotenv').config();
 		const app = express();
 		var jsonParser = bodyParser.json();
 		app.use((err, req, res, next) => {

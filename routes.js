@@ -12,6 +12,9 @@ router.post("/posts", async (req, res) => {
 router.post("/signup", (req, res) => {
 	return AuthController.UserRegistration(req, res)
 });
+router.post("/login", (req, res) => {
+	return AuthController.doLogin(req, res);
+});
 
 
 module.exports = router
