@@ -1,6 +1,7 @@
 var UserModel = require('../models/Users');
 var { logger } = require('../loggerConfig');
 const { response } = require('express');
+let constants = require('../util/constants');
 const UserRegistration = async function (req, res) {
     //const utility = require('../util/util');
     //console.log(utility.hashPassword(req.body.password));
@@ -16,6 +17,7 @@ const UserRegistration = async function (req, res) {
         gender: req.body.gender,
         role: 1,
         loginAttempt: 0,
+        token: ''
     }
     const Users = new UserModel(payload);
     const isExists = await UserModel.findOne({ email: req.body.email }).exec();
@@ -39,13 +41,12 @@ const findByEmail = async (dataObject) => {
     return await UserModel.findOne(dataObject).exec();
 }
 const doLogin = async (req, res) => {
-    const { generateBarerToken } = require('../util/util');
+    const { generateBarerToken, formatDate } = require('../util/util');
     const payload = {
         email: req.body.email,
         password: req.body.password
     }
-
-    UserModel.findOne(payload, function (err, user) {
+    UserModel.findOne(payload).populate('categories').exec(function (err, user) {
         if (err) {
             logger.error({ message: 'Please enter correct username & password', method: "doLogin", payload: req.body });
             res.status(200).send({ status: 200, message: 'Please enter correct username & password', data: { email: req.body.email } });
@@ -54,35 +55,75 @@ const doLogin = async (req, res) => {
             logger.error({ message: 'Please enter correct username & password', method: "doLogin", payload: req.body });
             res.status(200).send({ status: 200, message: 'Please enter correct username & password', data: { email: req.body.email } });
         } else {
+            console.log('user--->', user);
             const jwtData = {
                 role: user.role,
                 username: user.username,
                 email: user.username,
             }
             const token = generateBarerToken(jwtData);
-            logger.info({ message: 'User logged in successfully', method:  "doLogin", payload: {email: req.body.email}});
-
+            const updateAuthToken = {
+                token: token,
+                tokenExpiryDate: formatDate(new Date(), true)
+            }
+            UserModel.findOneAndUpdate(
+                {
+                    email: req.body.email
+                },
+                updateAuthToken,
+                {
+                    returnNewDocument: true
+                }
+                , function (error, result) {
+                    if (error) {
+                        logger.error({ message: 'Please enter correct username & password', method: "doLogin", payload: req.body });
+                        res.status(constants.STATUS_200.STATUS).send({ status: constants.STATUS_200.STATUS, message: 'Please enter correct username & password', data: { email: req.body.email } });
+                    }
+                });
+            logger.info({ message: 'User logged in successfully', method: "doLogin", payload: { email: req.body.email } });
             res.status(200).send({ status: 200, message: 'User logged in successfully', data: { email: req.body.email, _token: token } });
         }
     });
-    /*if (isExists.username !== undefined) {
-        
-        const jwtData = {
-            role: isExists.role,
-            username: isExists.username,
-            email: isExists.username,
-        }
-        
-        res.status(200).send({ status: 200, message: 'User logged in successfully', data: { email: req.body.email, _token:token } });
-    } else {
-        logger.error({ message: 'Please enter correct username & password', method:  "doLogin", payload: req.body});
-        res.status(200).send({ status: 200, message: 'Please enter correct username & password', data: { email: req.body.email } });
-    }*/
+}
 
+const authUser = (req, res, next) => {
+    const authorizationHeader = req.headers['authorization'];
+    if (typeof authorizationHeader !== undefined && authorizationHeader.length > 0) {
+        const authToken = authorizationHeader.split(' ')[1];
+        const payload = {
+            token: authToken,
+        }
+        UserModel.findOne(payload, function (err, user) {
+            if (err) {
+                logger.error({ message: 'Invalid authorization header', method: "authUser", payload: req.body });
+                res.status(constants.STATUS_403.STATUS).send({ status: constants.STATUS_403.STATUS, message: constants.STATUS_403.MESSAGE, data: {} });
+                next();
+            }
+            if (user === null) {
+                logger.error({ message: 'Invalid authorization header', method: "authUser", payload: req.body });
+                res.status(constants.STATUS_403.STATUS).send({ status: constants.STATUS_403.STATUS, message: constants.STATUS_403.MESSAGE, data: {} });
+                next();
+            }
+
+            const tokenExpired = user.tokenExpiryDate;
+            if (new Date(tokenExpired) <= new Date()) {
+                return next();
+            } else {
+                logger.error({ message: 'Invalid authorization header', method: "authUser", payload: req.body });
+                res.status(403).send({ status: 403, message: 'Invalid request', data: {} });
+                next();
+            }
+        }
+        )
+    } else {
+        logger.error({ message: 'Invalid authorization header', method: "authUser", payload: req.body });
+        res.status(403).send({ status: 403, message: 'Invalid request', data: {} });
+    }
 }
 
 module.exports = {
     UserRegistration,
     findByEmail,
-    doLogin
+    doLogin,
+    authUser
 }

@@ -14,6 +14,10 @@ const schema = mongoose.Schema({
     lastLoggedinDate: { type: Date, default: Date.now },
     token: String,
     tokenExpiryDate: { type: Date, default: Date.now },
+    categories: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'categories'
+    }],
     created: { type: Date, default: Date.now },
     updated:{ type: Date, default: Date.now }
 });

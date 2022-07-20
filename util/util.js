@@ -27,9 +27,26 @@ const generateBarerToken = (data={}) => {
     
     return jwtToken;
 }
+const formatDate = (date, addDay = false) => {
+    var yyyy = date.getFullYear().toString();
+    var mm = (date.getMonth() + 1).toString();
+    var dd = date.getDate().toString();
+    var mmChars = mm.split('');
+    var ddChars = dd.split('');
+    return yyyy + '-' + (mmChars[1] ? mm : "0" + mmChars[0]) + '-' + (ddChars[1] ? dd : "0" + ddChars[0]);
+}
+const verifyToken = (req, res, next) => {
+    const header = req.header['authorization'];
+    if(typeof header !== 'undefined') {
+        
+    } else {
+        return 
+    }
+}
 
 module.exports = {
     hashPassword,
     isPasswordCorrect,
-    generateBarerToken
+    generateBarerToken,
+    formatDate
 };
