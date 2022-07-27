@@ -16,6 +16,10 @@ router.post("/login", (req, res) => {
 router.post("/add-category", AuthController.authUser, (req, res) => {
 	return Categories.addNewCategory(req, res);
 });
+router.get('/logout',(req,res) => {
+    req.session.destroy();
+    res.status(200).send({"message":'User loggedout successfully'});
+});
 
 
 module.exports = router

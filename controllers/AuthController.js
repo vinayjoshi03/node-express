@@ -64,25 +64,25 @@ const doLogin = async (req, res) => {
                 userId: user._id
             }
             const token = generateBarerToken(jwtData);
-            const updateAuthToken = {
-                token: token,
-                tokenExpiryDate: formatDate(new Date(), true)
-            }
-            sessionData.user = { ...jwtData, token: token };
-            UserModel.findOneAndUpdate(
-                {
-                    email: req.body.email
-                },
-                updateAuthToken,
-                {
-                    returnNewDocument: true
-                }
-                , function (error, result) {
-                    if (error) {
-                        logger.error({ message: 'Please enter correct username & password', method: "doLogin", payload: req.body });
-                        res.status(constants.STATUS_200.STATUS).send({ status: constants.STATUS_200.STATUS, message: 'Please enter correct username & password', data: { email: req.body.email } });
-                    }
-                });
+            //  const updateAuthToken = {
+            //     token: token,
+            //     tokenExpiryDate: formatDate(new Date(), true)
+            //  }
+             sessionData.user = { ...jwtData, token: token };
+            // UserModel.findOneAndUpdate(
+            //     {
+            //         email: req.body.email
+            //     },
+            //     updateAuthToken,
+            //     {
+            //         returnNewDocument: true
+            //     }
+            //     , function (error, result) {
+            //         if (error) {
+            //             logger.error({ message: 'Please enter correct username & password', method: "doLogin", payload: req.body });
+            //             res.status(constants.STATUS_200.STATUS).send({ status: constants.STATUS_200.STATUS, message: 'Please enter correct username & password', data: { email: req.body.email } });
+            //         }
+            //     });
             logger.info({ message: 'User logged in successfully', method: "doLogin", payload: { email: req.body.email } });
             res.status(200).send({ status: 200, message: 'User logged in successfully', data: { email: req.body.email, _token: token } });
         }
@@ -101,22 +101,22 @@ const authUser = (req, res, next) => {
         try {
             const tokenVerification = verifyJwtToken(authToken);
             if (!tokenVerification) {
-                logger.error({ message: 'Invalid authorization header 1111', method: "authUser", payload: {} });
+                logger.error({ message: 'Invalid authorization header token is invalid', method: "authUser", payload: {} });
                 res.status(constants.STATUS_403.STATUS).send({ status: constants.STATUS_403.STATUS, message: constants.STATUS_403.MESSAGE, data: {} });
             }
             if(req.session.user === undefined || req.session.user.token !== authToken) {
-                logger.error({ message: 'Invalid authorization header', method: "authUser", payload: {} });
+                logger.error({ message: 'Invalid authorization header session is distroyed', method: "authUser", payload: {} });
                 res.status(constants.STATUS_403.STATUS).json({ status: constants.STATUS_403.STATUS, message: constants.STATUS_403.MESSAGE, data: {} });
                 return;
             }
 
             UserModel.findOne({ _id: mongoose.Types.ObjectId(tokenVerification.userId), }, function (err, user) {
                 if (err) {
-                    logger.error({ message: 'Invalid authorization header', method: "authUser", payload: {} });
+                    logger.error({ message: 'Invalid authorization header invalid user login', method: "authUser", payload: {} });
                     res.status(constants.STATUS_403.STATUS).send({ status: constants.STATUS_403.STATUS, message: constants.STATUS_403.MESSAGE, data: {} });
                 }
                 if (user === null) {
-                    logger.error({ message: 'Invalid authorization header 333 ', method: "authUser", payload: {} });
+                    logger.error({ message: 'Invalid authorization header invlid uesr', method: "authUser", payload: {} });
                     res.status(constants.STATUS_403.STATUS).send({ status: constants.STATUS_403.STATUS, message: constants.STATUS_403.MESSAGE, data: {} });
                 }
                 logger.info({ message: 'User authentication complete', method: "authUser", payload: tokenVerification });
@@ -125,11 +125,11 @@ const authUser = (req, res, next) => {
             )
         } catch (error) {
             logger.error({ message: 'Invalid authorization header', method: "authUser", payload: req.body });
-            res.status(403).send({ status: 403, message: 'Invalid request', data: {} });
+            res.status(constants.STATUS_403.STATUS).send({ status: constants.STATUS_403.STATUS, message: 'Invalid request', data: {} });
         }
     } else {
         logger.error({ message: 'Invalid authorization header', method: "authUser", payload: req.body });
-        res.status(403).send({ status: 403, message: 'Invalid request', data: {} });
+        res.status(constants.STATUS_403.STATUS).send({ status: constants.STATUS_403.STATUS, message: 'Invalid request', data: {} });
     }
 }
 
