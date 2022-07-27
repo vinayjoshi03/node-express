@@ -25,6 +25,7 @@ const generateBarerToken = (data={}) => {
     
     const jwtToken = jwt.sign(data, process.env.JWT_PRIVATE_KEY, {
         expiresIn: "2 days",
+        algorithm: "HS256"
       });
     return jwtToken;
 }

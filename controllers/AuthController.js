@@ -57,6 +57,7 @@ const doLogin = async (req, res) => {
             logger.error({ message: 'Please enter correct username & password', method: "doLogin", payload: req.body });
             res.status(200).send({ status: 200, message: 'Please enter correct username & password', data: { email: req.body.email } });
         } else {
+            console.log('user--->', user);
             const jwtData = {
                 role: user.role,
                 username: user.username,
@@ -64,6 +65,13 @@ const doLogin = async (req, res) => {
                 userId: user._id
             }
             const token = generateBarerToken(jwtData);
+            const responseData = { 
+                email: req.body.email, 
+                _token: token,
+                role: user.role,
+                categories: user.categories
+
+            }
             //  const updateAuthToken = {
             //     token: token,
             //     tokenExpiryDate: formatDate(new Date(), true)
@@ -84,7 +92,7 @@ const doLogin = async (req, res) => {
             //         }
             //     });
             logger.info({ message: 'User logged in successfully', method: "doLogin", payload: { email: req.body.email } });
-            res.status(200).send({ status: 200, message: 'User logged in successfully', data: { email: req.body.email, _token: token } });
+            res.status(200).send({ status: 200, message: 'User logged in successfully', data: responseData });
         }
     });
 }
