@@ -5,6 +5,7 @@ var bodyParser = require('body-parser');
 var morgan = require('morgan');
 const winston = require('winston');
 var { logger } = require('./loggerConfig');
+var session = require('express-session');
 
 require('dotenv').config();
 // Connect to MongoDB database
@@ -33,6 +34,8 @@ mongoose
 			
 			
 		});
+		const oneDay = 1000 * 60 * 60 * 24;
+		app.use(session({resave: true, saveUninitialized: true, secret: 'XCR3rsasa%RDHHH', cookie: { maxAge: oneDay }}));
 		/*app.use((req,res,next) => {
 			res.status(404).send({message:'Please contact to service administrator', data:{}});
 			logger.error(`400 || ${res.statusMessage} - ${req.originalUrl} - ${req.method} - ${req.ip}`);

@@ -1,5 +1,5 @@
 const crypto = require('node:crypto');
-
+var { logger } = require('../loggerConfig');
 const algorithm = 'aes-256-ctr';
 const secretKey = 'vOVH6sdmpNWjRRIqCc7rdxs01lwHzfr3';
 const iv = crypto.randomBytes(16);
@@ -23,9 +23,20 @@ const isPasswordCorrect = (savedHash, savedIterations, passwordAttempt) => {
 
 const generateBarerToken = (data={}) => {
     
-    const jwtToken = jwt.sign(data, process.env.JWT_PRIVATE_KEY);
-    
+    const jwtToken = jwt.sign(data, process.env.JWT_PRIVATE_KEY, {
+        expiresIn: "2 days",
+      });
     return jwtToken;
+}
+
+const verifyJwtToken = (token) => {
+    try {
+        const jwtToken = jwt.verify(token, process.env.JWT_PRIVATE_KEY);
+        return jwtToken;
+    } catch(error) {
+        logger.error({ message: 'Invalid token', method: "verifyJwtToken" });
+        return false;
+    }
 }
 const formatDate = (date, addDay = false) => {
     var yyyy = date.getFullYear().toString();
@@ -48,5 +59,6 @@ module.exports = {
     hashPassword,
     isPasswordCorrect,
     generateBarerToken,
-    formatDate
+    formatDate,
+    verifyJwtToken
 };

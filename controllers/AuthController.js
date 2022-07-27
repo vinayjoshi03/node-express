@@ -2,6 +2,7 @@ var UserModel = require('../models/Users');
 var { logger } = require('../loggerConfig');
 const { response } = require('express');
 let constants = require('../util/constants');
+const { default: mongoose } = require('mongoose');
 const UserRegistration = async function (req, res) {
     //const utility = require('../util/util');
     //console.log(utility.hashPassword(req.body.password));
@@ -41,6 +42,7 @@ const findByEmail = async (dataObject) => {
     return await UserModel.findOne(dataObject).exec();
 }
 const doLogin = async (req, res) => {
+    let sessionData = req.session;
     const { generateBarerToken, formatDate } = require('../util/util');
     const payload = {
         email: req.body.email,
@@ -55,17 +57,18 @@ const doLogin = async (req, res) => {
             logger.error({ message: 'Please enter correct username & password', method: "doLogin", payload: req.body });
             res.status(200).send({ status: 200, message: 'Please enter correct username & password', data: { email: req.body.email } });
         } else {
-            console.log('user--->', user);
             const jwtData = {
                 role: user.role,
                 username: user.username,
-                email: user.username,
+                email: user.email,
+                userId: user._id
             }
             const token = generateBarerToken(jwtData);
             const updateAuthToken = {
                 token: token,
                 tokenExpiryDate: formatDate(new Date(), true)
             }
+            sessionData.user = { ...jwtData, token: token };
             UserModel.findOneAndUpdate(
                 {
                     email: req.body.email
@@ -87,34 +90,43 @@ const doLogin = async (req, res) => {
 }
 
 const authUser = (req, res, next) => {
+    const { verifyJwtToken } = require('../util/util')
     const authorizationHeader = req.headers['authorization'];
     if (typeof authorizationHeader !== undefined && authorizationHeader.length > 0) {
         const authToken = authorizationHeader.split(' ')[1];
         const payload = {
             token: authToken,
         }
-        UserModel.findOne(payload, function (err, user) {
-            if (err) {
-                logger.error({ message: 'Invalid authorization header', method: "authUser", payload: req.body });
+
+        try {
+            const tokenVerification = verifyJwtToken(authToken);
+            if (!tokenVerification) {
+                logger.error({ message: 'Invalid authorization header 1111', method: "authUser", payload: {} });
                 res.status(constants.STATUS_403.STATUS).send({ status: constants.STATUS_403.STATUS, message: constants.STATUS_403.MESSAGE, data: {} });
-                next();
             }
-            if (user === null) {
-                logger.error({ message: 'Invalid authorization header', method: "authUser", payload: req.body });
-                res.status(constants.STATUS_403.STATUS).send({ status: constants.STATUS_403.STATUS, message: constants.STATUS_403.MESSAGE, data: {} });
-                next();
+            if(req.session.user === undefined || req.session.user.token !== authToken) {
+                logger.error({ message: 'Invalid authorization header', method: "authUser", payload: {} });
+                res.status(constants.STATUS_403.STATUS).json({ status: constants.STATUS_403.STATUS, message: constants.STATUS_403.MESSAGE, data: {} });
+                return;
             }
 
-            const tokenExpired = user.tokenExpiryDate;
-            if (new Date(tokenExpired) <= new Date()) {
-                return next();
-            } else {
-                logger.error({ message: 'Invalid authorization header', method: "authUser", payload: req.body });
-                res.status(403).send({ status: 403, message: 'Invalid request', data: {} });
+            UserModel.findOne({ _id: mongoose.Types.ObjectId(tokenVerification.userId), }, function (err, user) {
+                if (err) {
+                    logger.error({ message: 'Invalid authorization header', method: "authUser", payload: {} });
+                    res.status(constants.STATUS_403.STATUS).send({ status: constants.STATUS_403.STATUS, message: constants.STATUS_403.MESSAGE, data: {} });
+                }
+                if (user === null) {
+                    logger.error({ message: 'Invalid authorization header 333 ', method: "authUser", payload: {} });
+                    res.status(constants.STATUS_403.STATUS).send({ status: constants.STATUS_403.STATUS, message: constants.STATUS_403.MESSAGE, data: {} });
+                }
+                logger.info({ message: 'User authentication complete', method: "authUser", payload: tokenVerification });
                 next();
             }
+            )
+        } catch (error) {
+            logger.error({ message: 'Invalid authorization header', method: "authUser", payload: req.body });
+            res.status(403).send({ status: 403, message: 'Invalid request', data: {} });
         }
-        )
     } else {
         logger.error({ message: 'Invalid authorization header', method: "authUser", payload: req.body });
         res.status(403).send({ status: 403, message: 'Invalid request', data: {} });

@@ -11,8 +11,8 @@ module.exports = Object.freeze({
         STATUS: 404,
         MESSAGE: 'Invalid request'
     },
-    STATUS_404: {
-        STATUS: 404,
+    STATUS_403: {
+        STATUS: 403,
         MESSAGE: 'Invalid request'
     },
     STATUS_500: {
