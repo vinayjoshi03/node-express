@@ -10,6 +10,11 @@ const Categories = require('./controllers/CategoriesController');
 router.post("/signup", (req, res) => {
 	return AuthController.UserRegistration(req, res)
 });
+
+router.post("/", (req, res) => {
+	return AuthController.home(req, res)
+});
+
 router.post("/login", (req, res) => {
 	return AuthController.doLogin(req, res);
 });

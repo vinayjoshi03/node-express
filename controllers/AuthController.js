@@ -141,9 +141,14 @@ const authUser = (req, res, next) => {
     }
 }
 
+const home = (req, res) => {
+    res.send({data:[], message:"Home url"})
+}
+
 module.exports = {
     UserRegistration,
     findByEmail,
     doLogin,
-    authUser
+    authUser,
+    home
 }
