@@ -45,7 +45,7 @@ mongoose
 		app.use('/api', jsonParser, routes);
 		//app.use(morgan('combined'))
 		app.listen(8000, () => {
-			console.log("Server started running at 5000")
+			console.log("Server started running at 8000")
 		})
 	}).catch((e) => {
 		
