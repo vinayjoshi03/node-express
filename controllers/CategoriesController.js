@@ -1,4 +1,4 @@
-const CategoriesModel = require('../models/categories');
+const CategoriesModel = require('../models/Categories');
 var UserModel = require('../models/Users');
 var constants = require('../util/constants');
 const mongoose = require("mongoose")
