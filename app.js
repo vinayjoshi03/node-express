@@ -44,7 +44,7 @@ mongoose
 		var urlencodedParser = bodyParser.urlencoded({ extended: false })
 		app.use('/api', jsonParser, routes);
 		//app.use(morgan('combined'))
-		app.listen(5000, () => {
+		app.listen(8000, () => {
 			console.log("Server started running at 5000")
 		})
 	}).catch((e) => {
